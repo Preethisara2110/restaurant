@@ -176,28 +176,36 @@ function Home() {
             <form className="search-form" onSubmit={search}>
               <div className="select-field custom-select-field" id="state">
                 <label>State</label>
-                <div className="field-inner">
+                <div className="field-inner" onClick={() => { setShowStates(v => !v); setShowCities(false); }}>
                   <MapPin size={17} />
-                  <button type="button" id="state-select" className="select-trigger" aria-label="State" aria-expanded={showStates} onClick={() => { setShowStates(v => !v); setShowCities(false); }}>{state || 'Select State'}<ChevronDown size={16} /></button>
+                  <button type="button" id="state-select" className="select-trigger" aria-label="State" aria-expanded={showStates}>
+                    {state || 'Select State'} <ChevronDown size={16} />
+                  </button>
                 </div>
                 {showStates && (
                   <ul className="dropdown-options" role="listbox">
                     {states.map(s => (
-                      <li key={s} role="option" aria-selected={state === s} onClick={() => { setState(s); const next = cities[s] || fallbackCities[s] || []; setCity(next[0] || ''); setShowStates(false); }}>{s}</li>
+                      <li key={s} role="option" aria-selected={state === s} onClick={(e) => { e.stopPropagation(); setState(s); const next = cities[s] || fallbackCities[s] || []; setCity(next[0] || ''); setShowStates(false); }}>
+                        {s}
+                      </li>
                     ))}
                   </ul>
                 )}
               </div>
               <div className="select-field custom-select-field" id="city">
                 <label>City</label>
-                <div className="field-inner">
+                <div className="field-inner" onClick={() => { setShowCities(v => !v); setShowStates(false); }}>
                   <MapPin size={17} />
-                  <button type="button" id="city-select" className="select-trigger" aria-label="City" aria-expanded={showCities} onClick={() => { setShowCities(v => !v); setShowStates(false); }}>{city || 'Select City'}<ChevronDown size={16} /></button>
+                  <button type="button" id="city-select" className="select-trigger" aria-label="City" aria-expanded={showCities}>
+                    {city || 'Select City'} <ChevronDown size={16} />
+                  </button>
                 </div>
                 {showCities && (
                   <ul className="dropdown-options" role="listbox">
                     {currentCities.map(c => (
-                      <li key={c} role="option" aria-selected={city === c} onClick={() => { setCity(c); setShowCities(false); }}>{c}</li>
+                      <li key={c} role="option" aria-selected={city === c} onClick={(e) => { e.stopPropagation(); setCity(c); setShowCities(false); }}>
+                        {c}
+                      </li>
                     ))}
                   </ul>
                 )}
