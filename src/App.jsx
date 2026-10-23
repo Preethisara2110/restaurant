@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
-import { Search, MapPin, CalendarDays, Clock3, Star, Utensils, Menu, X, ArrowRight, CheckCircle2, Users, Smartphone, Instagram, Facebook, Twitter, Heart, ArrowLeft } from 'lucide-react';
+import { Search, MapPin, CalendarDays, Clock3, Star, Utensils, Menu, X, ChevronDown, ArrowRight, CheckCircle2, Users, Smartphone, Instagram, Facebook, Twitter, Heart, ArrowLeft } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -20,7 +20,6 @@ const readBookings = () => {
 function Header() {
   const [menu, setMenu] = useState(false);
   const loc = useLocation();
-
   return (
     <header className="header">
       <div className="nav wrap">
@@ -28,9 +27,7 @@ function Header() {
           <span className="brand-icon"><Utensils size={20} /></span>
           <span>table<span className="brand-blue">ease</span><small>RESTAURANT RESERVATIONS</small></span>
         </Link>
-        <button className="nav-toggle" onClick={() => setMenu(!menu)} aria-label="Toggle navigation">
-          {menu ? <X /> : <Menu />}
-        </button>
+        <button className="nav-toggle" onClick={() => setMenu(!menu)} aria-label="Toggle navigation">{menu ? <X /> : <Menu />}</button>
         <nav className={menu ? 'nav-links open' : 'nav-links'}>
           <Link onClick={() => setMenu(false)} className={loc.pathname === '/' ? 'active' : ''} to="/">Home</Link>
           <a onClick={() => setMenu(false)} href="/#find">Find Restaurants</a>
@@ -80,9 +77,7 @@ function Footer() {
           </div>
         </div>
       </div>
-      <div className="wrap copyright">
-        © 2026 TableEase. Made for memorable meals. <span>Terms&nbsp;&nbsp; · &nbsp;&nbsp;Privacy</span>
-      </div>
+      <div className="wrap copyright">© 2026 TableEase. Made for memorable meals. <span>Terms&nbsp;&nbsp; · &nbsp;&nbsp;Privacy</span></div>
     </footer>
   );
 }
@@ -108,54 +103,41 @@ function Home() {
   const [cities, setCities] = useState(fallbackCities);
   const [state, setState] = useState('Texas');
   const [city, setCity] = useState('Austin');
+  const [showStates, setShowStates] = useState(false);
+  const [showCities, setShowCities] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     let alive = true;
-    fetch(`${API}/states`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (!alive) return;
-        const arr = Array.isArray(data) ? data : data.states || data.data || [];
-        const names = arr.map((x) => (typeof x === 'string' ? x : x.name || x.state)).filter(Boolean);
-        if (names.length) {
-          const merged = [...new Set([...fallbackStates, ...names])];
-          setStates(merged);
-        }
-      })
-      .catch(() => {});
+    fetch(`${API}/states`).then(r => r.ok ? r.json() : []).then(data => {
+      if (!alive) return;
+      const arr = Array.isArray(data) ? data : data.states || data.data || [];
+      const names = arr.map(x => typeof x === 'string' ? x : x.name || x.state).filter(Boolean);
+      if (names.length) {
+        const merged = [...new Set([...fallbackStates, ...names])];
+        setStates(merged);
+        if (!merged.includes(state)) setState(merged[0]);
+      }
+    }).catch(() => {});
     return () => { alive = false; };
   }, []);
 
   useEffect(() => {
     if (!state) return;
     let alive = true;
-    fetch(`${API}/cities/${encodeURIComponent(state)}`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (!alive) return;
-        const arr = Array.isArray(data) ? data : data.cities || data.data || [];
-        const names = arr.map((x) => (typeof x === 'string' ? x : x.name || x.city)).filter(Boolean);
-        const next = names.length ? names : fallbackCities[state] || [];
-        setCities((p) => ({ ...p, [state]: next }));
-        if (next.length && !next.includes(city)) setCity(next[0]);
-      })
-      .catch(() => {
-        if (alive) setCities((p) => ({ ...p, [state]: fallbackCities[state] || [] }));
-      });
+    fetch(`${API}/cities/${encodeURIComponent(state)}`).then(r => r.ok ? r.json() : []).then(data => {
+      if (!alive) return;
+      const arr = Array.isArray(data) ? data : data.cities || data.data || [];
+      const names = arr.map(x => typeof x === 'string' ? x : x.name || x.city).filter(Boolean);
+      const next = names.length ? names : (fallbackCities[state] || []);
+      setCities(p => ({ ...p, [state]: next }));
+      if (next.length && !next.includes(city)) setCity(next[0]);
+    }).catch(() => { if (alive) setCities(p => ({ ...p, [state]: fallbackCities[state] || [] })); });
     return () => { alive = false; };
   }, [state]);
 
   const currentCities = cities[state] || fallbackCities[state] || [];
-
-  const handleStateChange = (e) => {
-    const selectedState = e.target.value;
-    setState(selectedState);
-    const nextCities = cities[selectedState] || fallbackCities[selectedState] || [];
-    setCity(nextCities[0] || '');
-  };
-
-  const search = (e) => {
+  const search = e => {
     e.preventDefault();
     navigate(`/search?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}`);
   };
@@ -176,7 +158,7 @@ function Home() {
             <a className="text-link" href="#find">Find your next favourite <ArrowRight size={16} /></a>
           </div>
           <div className="hero-art">
-            <div className="hero-photo"><img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=90" alt="Restaurant interior" /></div>
+            <div className="hero-photo"><img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=90" alt="Warm and welcoming restaurant interior" /></div>
             <div className="floating-card rating-float"><span className="float-star"><Star size={17} fill="currentColor" /></span><div><strong>4.8/5</strong><small>Guest rated</small></div></div>
             <div className="floating-card booking-float"><span className="float-check"><CheckCircle2 size={19} /></span><div><strong>Table secured!</strong><small>Your next meal awaits</small></div></div>
             <div className="art-circle" />
@@ -193,42 +175,34 @@ function Home() {
             </div>
             <form className="search-form" onSubmit={search}>
               <div className="select-field custom-select-field" id="state">
-                <label htmlFor="state-select">State</label>
+                <label>State</label>
                 <div className="field-inner">
                   <MapPin size={17} />
-                  <select
-                    id="state-select"
-                    className="select-trigger"
-                    value={state}
-                    onChange={handleStateChange}
-                  >
-                    {states.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                  <button type="button" id="state-select" className="select-trigger" aria-label="State" aria-expanded={showStates} onClick={() => { setShowStates(v => !v); setShowCities(false); }}>{state || 'Select State'}<ChevronDown size={16} /></button>
                 </div>
+                {showStates && (
+                  <ul className="dropdown-options" role="listbox">
+                    {states.map(s => (
+                      <li key={s} role="option" aria-selected={state === s} onClick={() => { setState(s); const next = cities[s] || fallbackCities[s] || []; setCity(next[0] || ''); setShowStates(false); }}>{s}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
-
               <div className="select-field custom-select-field" id="city">
-                <label htmlFor="city-select">City</label>
+                <label>City</label>
                 <div className="field-inner">
                   <MapPin size={17} />
-                  <select
-                    id="city-select"
-                    className="select-trigger"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                  >
-                    {currentCities.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                  <button type="button" id="city-select" className="select-trigger" aria-label="City" aria-expanded={showCities} onClick={() => { setShowCities(v => !v); setShowStates(false); }}>{city || 'Select City'}<ChevronDown size={16} /></button>
                 </div>
+                {showCities && (
+                  <ul className="dropdown-options" role="listbox">
+                    {currentCities.map(c => (
+                      <li key={c} role="option" aria-selected={city === c} onClick={() => { setCity(c); setShowCities(false); }}>{c}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
-
-              <button id="searchBtn" type="submit" className="btn btn-primary search-submit">
-                <Search size={17} /> Search Restaurants
-              </button>
+              <button id="searchBtn" type="submit" className="btn btn-primary search-submit"><Search size={17} /> Search Restaurants</button>
             </form>
             <div className="search-note"><span /> Explore trusted local favourites and reserve at no extra cost.</div>
           </div>
@@ -274,43 +248,30 @@ function Home() {
 
 function SearchResults() {
   const params = new URLSearchParams(useLocation().search);
-  const state = params.get('state') || 'Texas';
-  const city = params.get('city') || 'Austin';
+  const state = params.get('state') || 'Texas', city = params.get('city') || 'Austin';
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-    const fallback = sampleRestaurants.filter(
-      (r) => r.state.toLowerCase() === state.toLowerCase() && r.city.toLowerCase() === city.toLowerCase()
-    );
+    const localFallback = sampleRestaurants.filter(r => r.state.toLowerCase() === state.toLowerCase() && r.city.toLowerCase() === city.toLowerCase());
+    setRestaurants(localFallback);
+    setLoading(false);
 
-    fetch(`${API}/restaurants?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (!alive) return;
-        const arr = Array.isArray(data) ? data : data.restaurants || data.data || [];
-        const normalized = arr.map((r, i) => ({
-          ...r,
-          id: String(r.id || r._id || `api-${i}`),
-          name: r.name || r.restaurantName || 'Restaurant',
-          address: r.address || 'Address available on request',
-          city: r.city || city,
-          state: r.state || state,
-          overallRating: Number(r.overallRating || r.rating || 4.5),
-          image: r.image || sampleRestaurants[i % sampleRestaurants.length].image,
-          cuisine: r.cuisine || 'Local favourite',
-          price: r.price || '$$'
-        }));
-        setRestaurants(normalized.length ? normalized : fallback);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setRestaurants(fallback);
-        setLoading(false);
-      });
-
+    fetch(`${API}/restaurants?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}`).then(r => {
+      if (!r.ok) throw Error('Request failed');
+      return r.json();
+    }).then(data => {
+      if (!alive) return;
+      const arr = Array.isArray(data) ? data : data.restaurants || data.data || [];
+      const normalized = arr.map((r, i) => ({ ...r, id: String(r.id || r._id || `api-${i}`), name: r.name || r.restaurantName || 'Restaurant', address: r.address || 'Address available on request', city: r.city || city, state: r.state || state, overallRating: Number(r.overallRating || r.rating || 4.5), image: r.image || sampleRestaurants[i % sampleRestaurants.length].image, cuisine: r.cuisine || 'Local favourite', price: r.price || '$$' }));
+      setRestaurants(normalized.length ? normalized : localFallback);
+      setLoading(false);
+    }).catch(() => {
+      if (!alive) return;
+      setRestaurants(localFallback);
+      setLoading(false);
+    });
     return () => { alive = false; };
   }, [state, city]);
 
@@ -339,70 +300,36 @@ function SearchResults() {
 
 function RestaurantCard({ restaurant: r, city, state }) {
   const navigate = useNavigate();
-  const openBooking = () => navigate(`/booking/${encodeURIComponent(r.id || r.name)}`, { state: { restaurant: r } });
-
+  const openBooking = () => navigate(`/booking/${encodeURIComponent(r.id || r._id || r.name)}`, { state: { restaurant: r } });
   return (
     <article className="result-card">
-      <div className="result-image">
-        <img src={r.image || sampleRestaurants[0].image} alt={r.name} />
-        <span className="result-price">{r.price || '$$'}</span>
-      </div>
+      <div className="result-image"><img src={r.image || sampleRestaurants[0].image} alt={r.name} /><span className="result-price">{r.price || '$$'}</span></div>
       <div className="result-details">
         <span className="result-cuisine">{r.cuisine || 'RESTAURANT'}</span>
         <h3>{r.name}</h3>
-        <p className="address"><MapPin size={15} />{r.address}, {r.city || city}, {r.state || state}</p>
+        <p className="address"><MapPin size={15} />{r.address || 'Address available on request'}, {r.city || city}, {r.state || state}</p>
         <p className="restaurant-description">{r.description || 'A welcoming local restaurant.'}</p>
-        <div className="result-meta">
-          <span className="rating"><Star size={15} fill="currentColor" />{Number(r.overallRating || 4.5).toFixed(1)}</span>
-        </div>
+        <div className="result-meta"><span className="rating"><Star size={15} fill="currentColor" />{Number(r.overallRating || r.rating || 4.5).toFixed(1)}</span></div>
       </div>
       <div className="result-action">
-        <button type="button" className="btn btn-primary mobile-toggle" onClick={openBooking}>
-          Book FREE Reservation <ArrowRight size={15} />
-        </button>
+        <button type="button" className="btn btn-primary mobile-toggle" onClick={openBooking}>Book FREE Reservation <ArrowRight size={15} /></button>
       </div>
     </article>
   );
 }
 
 function BookingPage() {
-  const { id } = useParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [guests, setGuests] = useState('2 guests');
-  const [success, setSuccess] = useState(false);
-
-  const restaurant = location.state?.restaurant || sampleRestaurants.find((r) => r.id === id) || {
-    id, name: 'Austin Bistro & Grill', address: '120 Congress Avenue', city: 'Austin', state: 'Texas', overallRating: 4.6, image: sampleRestaurants[0].image, cuisine: 'American'
-  };
-
-  const dates = useMemo(() => Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + i);
-    return d;
-  }), []);
-
+  const { id } = useParams(), location = useLocation();
+  const [date, setDate] = useState(''), [time, setTime] = useState(''), [guests, setGuests] = useState('2 guests'), [success, setSuccess] = useState(false);
+  const restaurant = location.state?.restaurant || sampleRestaurants.find(r => r.id === id) || { id, name: 'Austin Bistro & Grill', address: '120 Congress Avenue', city: 'Austin', state: 'Texas', overallRating: 4.6, image: sampleRestaurants[0].image, cuisine: 'American' };
+  const dates = useMemo(() => Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i); return d; }), []);
   const times = ['10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM'];
 
-  const reserve = (e) => {
+  const reserve = e => {
     e.preventDefault();
     if (!date || !time) return;
     const bookings = readBookings();
-    const booking = {
-      id: `booking-${Date.now()}`,
-      restaurantId: restaurant.id,
-      restaurantName: restaurant.name,
-      address: restaurant.address,
-      city: restaurant.city,
-      state: restaurant.state,
-      date,
-      time,
-      guests,
-      createdAt: new Date().toISOString()
-    };
+    const booking = { id: `booking-${Date.now()}`, restaurantId: restaurant.id, restaurantName: restaurant.name, address: restaurant.address, city: restaurant.city, state: restaurant.state, date, time, guests, createdAt: new Date().toISOString() };
     localStorage.setItem('bookings', JSON.stringify([booking, ...bookings]));
     setSuccess(true);
   };
@@ -413,7 +340,7 @@ function BookingPage() {
         {success ? (
           <div className="success-panel">
             <h2>Your table is reserved!</h2>
-            <p>Reservation at <strong>{restaurant.name}</strong> confirmed.</p>
+            <p>Your reservation at <strong>{restaurant.name}</strong> has been saved.</p>
             <Link className="btn btn-primary" to="/my-bookings">View my bookings</Link>
           </div>
         ) : (
@@ -422,23 +349,13 @@ function BookingPage() {
             <div className="date-options">
               {dates.map((d, i) => {
                 const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                return (
-                  <button type="button" key={val} onClick={() => setDate(val)} className={`date-option ${date === val ? 'selected' : ''}`}>
-                    {i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' })} {d.getDate()}
-                  </button>
-                );
+                return <button type="button" key={val} onClick={() => setDate(val)} className={`date-option ${date === val ? 'selected' : ''}`}><span>{i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' })}</span><strong>{d.getDate()}</strong></button>;
               })}
             </div>
             <div className="time-options">
-              {times.map((t) => (
-                <button type="button" key={t} onClick={() => setTime(t)} className={`time-option ${time === t ? 'selected' : ''}`}>
-                  {t}
-                </button>
-              ))}
+              {times.map(t => <button type="button" key={t} onClick={() => setTime(t)} className={`time-option ${time === t ? 'selected' : ''}`}>{t}</button>)}
             </div>
-            <button type="submit" className="btn btn-primary reserve-btn" disabled={!date || !time}>
-              Confirm Reservation
-            </button>
+            <button type="submit" className="btn btn-primary reserve-btn" disabled={!date || !time}>Confirm Reservation</button>
           </form>
         )}
       </div>
@@ -448,13 +365,10 @@ function BookingPage() {
 
 function MyBookings() {
   const [bookings, setBookings] = useState([]);
+  useEffect(() => { setBookings(readBookings()); }, []);
 
-  useEffect(() => {
-    setBookings(readBookings());
-  }, []);
-
-  const cancelBooking = (id) => {
-    const updated = bookings.filter((b) => b.id !== id);
+  const cancelBooking = id => {
+    const updated = bookings.filter(b => b.id !== id);
     localStorage.setItem('bookings', JSON.stringify(updated));
     setBookings(updated);
   };
@@ -467,7 +381,7 @@ function MyBookings() {
           <p>No bookings found.</p>
         ) : (
           <div className="bookings-list">
-            {bookings.map((b) => (
+            {bookings.map(b => (
               <div key={b.id} className="booking-card-item">
                 <h3>{b.restaurantName}</h3>
                 <p>{b.date} at {b.time} - {b.guests}</p>
