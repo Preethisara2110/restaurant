@@ -147,7 +147,6 @@ function Home() {
     return () => { alive = false; };
   }, [state]);
 
-  const currentCities = cities[state] || fallbackCities[state] || [];
   const search = e => {
     e.preventDefault();
     navigate(`/search?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}`);
@@ -181,7 +180,6 @@ function Home() {
             className="select-field custom-select-field"
             id="state"
             onClick={event => {
-              // Cypress and users may click the field container, not just the button.
               if (event.target.closest('button, li')) return;
               setShowStates(true);
               setShowCities(false);
@@ -230,7 +228,6 @@ function Home() {
             className="select-field custom-select-field"
             id="city"
             onClick={event => {
-              // Also allow clicking the City field's label or surrounding area.
               if (event.target.closest('button, li')) return;
               setShowCities(true);
               setShowStates(false);
@@ -322,8 +319,6 @@ function SearchResults() {
       String(r.state || '').trim().toLowerCase() === state.trim().toLowerCase() &&
       String(r.city || '').trim().toLowerCase() === city.trim().toLowerCase()
     );
-    // Keep the search and booking flow usable when the sample dataset has no exact
-    // location match (for example, during an API outage or in assessment tests).
     const fallbackSource = matchingSamples.length ? matchingSamples : sampleRestaurants;
     const fallback = fallbackSource.map((r, i) =>
       normalizeRestaurant({ ...r, city: r.city || city, state: r.state || state }, i, city, state)
@@ -339,7 +334,6 @@ function SearchResults() {
     }).then(data => {
       if (!alive) return;
       const list = Array.isArray(data) ? data : data.restaurants || data.data || [];
-      // Prefer API data when present; retain sample data when the API returns no results.
       if (Array.isArray(list) && list.length) {
         const normalized = list.map((item, index) => normalizeRestaurant(item, index, city, state));
         const matching = normalized.filter(item =>
@@ -436,56 +430,79 @@ function BookingPage() {
           {dates.map((day, index) => {
             const value = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
             const label = index === 0 ? 'Today' : day.toLocaleDateString('en-US', { weekday: 'short' });
-            return <button type="button" key={value} data-testid="date-option" aria-label={`${label} ${day.getDate()}`} aria-pressed={date === value} onClick={() => setDate(value)} className={`date-option ${date === value ? 'selected' : ''}`}><span>{label}</span><strong>{day.getDate()}</strong></button>;
+            return <button type="button" key={value} data-testid="date-option" aria-label={`${label} ${day.getDate()}`} aria-pressed={date === value} onClick={() => setDate(value)} className={`date-option ${date === value ? 'selected' : ''}`}>
+              <span className="day-name">{label}</span>
+              <span className="day-num">{day.getDate()}</span>
+            </button>;
           })}
         </div>
-        <h3><Clock3 size={18} /> Choose a time</h3>
-        {Object.entries(TIMES).map(([period, slots]) => <section className="time-period time-group" key={period}><p>{period}</p><div className="time-options">{slots.map(slot => <button type="button" data-testid="time-option" key={slot} aria-pressed={time === slot} onClick={() => setTime(slot)} className={`time-option ${time === slot ? 'selected' : ''}`}>{slot}</button>)}</div></section>)}
-        <h3><Users size={18} /> Number of guests</h3>
-        <select value={guests} onChange={e => setGuests(e.target.value)} aria-label="Number of guests" className="guest-select">
-          {Array.from({ length: 8 }, (_, i) => `${i + 1} ${i === 0 ? 'guest' : 'guests'}`).map(value => <option key={value} value={value}>{value}</option>)}
-        </select>
-        <button type="submit" className="btn btn-primary reserve-btn confirm-btn" data-testid="confirm-reservation" disabled={!date || !time}>Confirm Reservation</button>
-      </form>}
+        <h3><Clock3 size={18} /> Choose a time slot</h3>
+        <div className="time-sections">
+          {Object.entries(TIMES).map(([category, slots]) => (
+            <div key={category} className="time-section">
+              <h4>{category}</h4>
+              <div className="time-slots">
+                {slots.map(slot => (
+                  <button type="button" key={slot} data-testid="time-slot" aria-pressed={time === slot} onClick={() => setTime(slot)} className={`time-slot ${time === slot ? 'selected' : ''}`}>{slot}</button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <button type="submit" className="btn btn-primary reserve-btn" disabled={!date || !time}>Confirm Reservation</button>
+      </form>
+    }
   </div></main>;
 }
 
 function MyBookings() {
-  const [bookings, setBookings] = useState(readBookings);
+  const [bookings, setBookings] = useState(readBookings());
+
   useEffect(() => {
-    const refresh = () => setBookings(readBookings());
-    refresh();
-    window.addEventListener('storage', refresh);
-    window.addEventListener('bookingsUpdated', refresh);
-    return () => {
-      window.removeEventListener('storage', refresh);
-      window.removeEventListener('bookingsUpdated', refresh);
-    };
+    const handleUpdate = () => setBookings(readBookings());
+    window.addEventListener('bookingsUpdated', handleUpdate);
+    return () => window.removeEventListener('bookingsUpdated', handleUpdate);
   }, []);
 
-  const cancelBooking = booking => {
-    const items = readBookings();
-    const index = items.findIndex(item => item.id && item.id === booking.id);
-    const updated = index >= 0 ? items.filter((_, i) => i !== index) :
-      items.filter(item => !(
-        (item.restaurantName || item.name) === (booking.restaurantName || booking.name) &&
-        (item.date || item.bookingDate || '') === (booking.date || booking.bookingDate || '') &&
-        (item.time || item.bookingTime || '') === (booking.time || booking.bookingTime || '')
-      ));
+  const cancelBooking = (id) => {
+    const updated = bookings.filter(b => b.id !== id);
     saveBookings(updated);
-    setBookings(updated);
   };
 
-  return <main className="page-main my-bookings-page"><div className="wrap">
-    <h1>My Bookings</h1>
-    {bookings.length === 0 ? <div className="empty-bookings"><CalendarDays size={38} /><h2>No bookings found.</h2><p>Discover a restaurant and reserve your table.</p><Link className="btn btn-primary" to="/search?state=Texas&city=Austin">Find Restaurants <ArrowRight size={15} /></Link></div> :
-      <div className="bookings-list">{bookings.map((booking, index) => <article key={booking.id || `${booking.restaurantName || booking.name}-${index}`} className="booking-card-item">
-        <h3>{booking.restaurantName || booking.name || 'Restaurant'}</h3>
-        {booking.address && <p>{booking.address}</p>}
-        {(booking.date || booking.bookingDate) && <p><CalendarDays size={15} /> {booking.date || booking.bookingDate}</p>}
-        {(booking.time || booking.bookingTime) && <p><Clock3 size={15} /> {booking.time || booking.bookingTime}</p>}
-        {(booking.guests || booking.numberOfGuests || booking.partySize) && <p><Users size={15} /> {booking.guests || booking.numberOfGuests || booking.partySize}</p>}
-        <button type="button" className="btn btn-outline" onClick={() => cancelBooking(booking)}>Cancel</button>
-      </article>)}</div>}
-  </div></main>;
+  return (
+    <main className="page-main">
+      <section className="results-banner">
+        <div className="wrap">
+          <div className="crumb"><Link to="/">Home</Link><span>/</span><span>My Bookings</span></div>
+          <h1>My Bookings</h1>
+          <p>Manage your upcoming table reservations.</p>
+        </div>
+      </section>
+      <section className="results-content wrap">
+        {bookings.length === 0 ? (
+          <div className="empty-state">
+            <h2>No bookings found</h2>
+            <p>You haven't reserved any tables yet.</p>
+            <Link className="btn btn-primary" to="/">Find restaurants</Link>
+          </div>
+        ) : (
+          <div className="results-list">
+            {bookings.map(b => (
+              <article key={b.id} className="result-card">
+                <div className="result-details">
+                  <span className="result-cuisine">RESERVATION</span>
+                  <h3>{b.restaurantName || b.name}</h3>
+                  <p className="address"><MapPin size={15} /> {b.address}, {b.city}, {b.state}</p>
+                  <p><CalendarDays size={14} /> {b.date || b.bookingDate} at {b.time || b.bookingTime} ({b.guests || b.numberOfGuests})</p>
+                </div>
+                <div className="result-action">
+                  <button type="button" className="btn btn-secondary" onClick={() => cancelBooking(b.id)}>Cancel Booking</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
+  );
 }
