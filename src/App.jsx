@@ -374,7 +374,9 @@ function RestaurantCard({ restaurant, city, state }) {
       <div className="result-meta"><span className="rating"><Star size={15} fill="currentColor" /> {Number(restaurant.overallRating || restaurant.rating || 4.5).toFixed(1)}</span><span>Overall rating</span><span className="free-reservation"><CheckCircle2 size={13} /> Free reservation</span></div>
     </div>
     <div className="result-action"><div className="result-action-heading"><Users size={14} /> Great for your next meal</div>
-      <button type="button" className="btn btn-primary mobile-toggle" data-testid="book-reservation" aria-label={`Book FREE Reservation at ${restaurant.name}`} onClick={openBooking}><span>Book FREE Reservation</span> <ArrowRight size={15} /></button>
+      <button type="button" className="btn btn-primary mobile-toggle" data-testid="book-reservation" aria-label={`Book FREE Reservation at ${restaurant.name}`} onClick={openBooking}>
+        <span>Book FREE Reservation</span> <ArrowRight size={15} />
+      </button>
       <small>No booking fees. Ever.</small>
     </div>
   </article>;
