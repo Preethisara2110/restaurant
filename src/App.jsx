@@ -177,25 +177,99 @@ function Home() {
       <div className="wrap"><div className="search-card">
         <div className="search-heading"><span className="search-icon"><Search size={21} /></span><div><h2>Find your perfect table</h2><p>Choose your destination and we'll find the restaurants.</p></div></div>
         <form className="search-form" onSubmit={search}>
-          <div className="select-field custom-select-field" id="state">
+          <div
+            className="select-field custom-select-field"
+            id="state"
+            onClick={event => {
+              // Cypress and users may click the field container, not just the button.
+              if (event.target.closest('button, li')) return;
+              setShowStates(value => !value);
+              setShowCities(false);
+            }}
+          >
             <label htmlFor="state-select">State</label>
-            <div className="field-inner" onClick={() => { setShowStates(v => !v); setShowCities(false); }}>
+            <div className="field-inner">
               <MapPin size={17} />
-              <button type="button" id="state-select" className="select-trigger" aria-label="State" aria-expanded={showStates}>{state || 'Select State'} <ChevronDown size={16} /></button>
+              <button
+                type="button"
+                id="state-select"
+                className="select-trigger"
+                aria-label="State"
+                aria-expanded={showStates}
+                onClick={() => {
+                  setShowStates(value => !value);
+                  setShowCities(false);
+                }}
+              >
+                {state || 'Select State'} <ChevronDown size={16} />
+              </button>
             </div>
-            {showStates && <ul className="dropdown-options" role="listbox" aria-label="States">
-              {states.map(item => <li key={item} role="option" aria-selected={state === item} onClick={e => { e.stopPropagation(); setState(item); setCity((cities[item] || fallbackCities[item] || [])[0] || ''); setShowStates(false); }}>{item}</li>)}
-            </ul>}
+            {showStates && (
+              <ul className="dropdown-options" role="listbox" aria-label="States">
+                {Array.from(new Set([...fallbackStates, ...states])).map(item => (
+                  <li
+                    key={item}
+                    role="option"
+                    aria-selected={state === item}
+                    onClick={event => {
+                      event.stopPropagation();
+                      setState(item);
+                      const nextCities = cities[item] || fallbackCities[item] || [];
+                      setCity(nextCities[0] || '');
+                      setShowStates(false);
+                    }}
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-          <div className="select-field custom-select-field" id="city">
+          <div
+            className="select-field custom-select-field"
+            id="city"
+            onClick={event => {
+              // Also allow clicking the City field's label or surrounding area.
+              if (event.target.closest('button, li')) return;
+              setShowCities(value => !value);
+              setShowStates(false);
+            }}
+          >
             <label htmlFor="city-select">City</label>
-            <div className="field-inner" onClick={() => { setShowCities(v => !v); setShowStates(false); }}>
+            <div className="field-inner">
               <MapPin size={17} />
-              <button type="button" id="city-select" className="select-trigger" aria-label="City" aria-expanded={showCities}>{city || 'Select City'} <ChevronDown size={16} /></button>
+              <button
+                type="button"
+                id="city-select"
+                className="select-trigger"
+                aria-label="City"
+                aria-expanded={showCities}
+                onClick={() => {
+                  setShowCities(value => !value);
+                  setShowStates(false);
+                }}
+              >
+                {city || 'Select City'} <ChevronDown size={16} />
+              </button>
             </div>
-            {showCities && <ul className="dropdown-options" role="listbox" aria-label="Cities">
-              {currentCities.map(item => <li key={item} role="option" aria-selected={city === item} onClick={e => { e.stopPropagation(); setCity(item); setShowCities(false); }}>{item}</li>)}
-            </ul>}
+            {showCities && (
+              <ul className="dropdown-options" role="listbox" aria-label="Cities">
+                {[...new Set([...(cities[state] || []), ...(fallbackCities[state] || [])])].map(item => (
+                  <li
+                    key={item}
+                    role="option"
+                    aria-selected={city === item}
+                    onClick={event => {
+                      event.stopPropagation();
+                      setCity(item);
+                      setShowCities(false);
+                    }}
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <button id="searchBtn" type="submit" className="btn btn-primary search-submit"><Search size={17} /> Search Restaurants</button>
         </form>
@@ -258,7 +332,12 @@ function SearchResults() {
       const list = Array.isArray(data) ? data : data.restaurants || data.data || [];
       // Prefer API data when present; retain sample data when the API returns no results.
       if (Array.isArray(list) && list.length) {
-        setRestaurants(list.map((item, index) => normalizeRestaurant(item, index, city, state)));
+        const normalized = list.map((item, index) => normalizeRestaurant(item, index, city, state));
+        const matching = normalized.filter(item =>
+          String(item.state || '').toLowerCase() === state.toLowerCase() &&
+          String(item.city || '').toLowerCase() === city.toLowerCase()
+        );
+        if (matching.length) setRestaurants(matching);
       }
     }).catch(error => {
       if (error.name !== 'AbortError') console.warn('Using local restaurant data:', error.message);
@@ -291,7 +370,7 @@ function RestaurantCard({ restaurant, city, state }) {
       <div className="result-meta"><span className="rating"><Star size={15} fill="currentColor" /> {Number(restaurant.overallRating || restaurant.rating || 4.5).toFixed(1)}</span><span>Overall rating</span><span className="free-reservation"><CheckCircle2 size={13} /> Free reservation</span></div>
     </div>
     <div className="result-action"><div className="result-action-heading"><Users size={14} /> Great for your next meal</div>
-      <button type="button" className="btn btn-primary mobile-toggle" aria-label={`Book FREE Reservation at ${restaurant.name}`} onClick={openBooking}>Book FREE Reservation <ArrowRight size={15} /></button>
+      <button type="button" className="btn btn-primary mobile-toggle" data-testid="book-reservation" aria-label={`Book FREE Reservation at ${restaurant.name}`} onClick={openBooking}>Book FREE Reservation <ArrowRight size={15} /></button>
       <small>No booking fees. Ever.</small>
     </div>
   </article>;
@@ -356,7 +435,7 @@ function BookingPage() {
         <select value={guests} onChange={e => setGuests(e.target.value)} aria-label="Number of guests" className="guest-select">
           {Array.from({ length: 8 }, (_, i) => `${i + 1} ${i === 0 ? 'guest' : 'guests'}`).map(value => <option key={value} value={value}>{value}</option>)}
         </select>
-        <button type="submit" className="btn btn-primary reserve-btn confirm-btn" disabled={!date || !time}>Confirm Reservation</button>
+        <button type="submit" className="btn btn-primary reserve-btn confirm-btn" data-testid="confirm-reservation" disabled={!date || !time}>Confirm Reservation</button>
       </form>}
   </div></main>;
 }
