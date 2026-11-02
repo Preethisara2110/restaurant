@@ -1,488 +1,1522 @@
+
 import React, { useEffect, useMemo, useState } from 'react';
+
 import {
-  Routes, Route, Link, useNavigate, useLocation, useParams
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  useLocation,
+  useParams
 } from 'react-router-dom';
+
 import {
-  Search, MapPin, CalendarDays, Clock3, Star, Utensils, Menu, X,
-  ChevronDown, ArrowRight, CheckCircle2, Users, Smartphone, Instagram,
-  Facebook, Twitter, Heart, ArrowLeft
+  Search,
+  MapPin,
+  CalendarDays,
+  Clock3,
+  Star,
+  Utensils,
+  Menu,
+  X,
+  ChevronDown,
+  ArrowRight,
+  CheckCircle2,
+  Users,
+  Smartphone,
+  Instagram,
+  Facebook,
+  Twitter,
+  Heart,
+  ArrowLeft
 } from 'lucide-react';
+
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
+
 import 'swiper/css';
 import 'swiper/css/pagination';
-import { fallbackStates, fallbackCities, sampleRestaurants } from './data.js';
+
+import {
+  fallbackStates,
+  fallbackCities,
+  sampleRestaurants
+} from './data.js';
 
 const API = 'https://restaurantdata.onrender.com';
+
 const BOOKING_KEY = 'bookings';
+
 const TIMES = {
   Morning: ['10:00 AM', '11:00 AM'],
   Afternoon: ['12:00 PM', '1:00 PM', '2:00 PM'],
   Evening: ['5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM']
 };
 
+// LOCAL STORAGE
+
 function readBookings() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(BOOKING_KEY) || '[]');
+    const data = localStorage.getItem(BOOKING_KEY);
+
+    if (!data) return [];
+
+    const parsed = JSON.parse(data);
+
     return Array.isArray(parsed) ? parsed : [];
-  } catch {
+  } catch (error) {
+    console.error('Error reading bookings:', error);
     return [];
   }
 }
 
 function saveBookings(items) {
-  localStorage.setItem(BOOKING_KEY, JSON.stringify(items));
-  window.dispatchEvent(new Event('bookingsUpdated'));
+  try {
+    localStorage.setItem(BOOKING_KEY, JSON.stringify(items));
+
+    window.dispatchEvent(new Event('bookingsUpdated'));
+
+    return true;
+  } catch (error) {
+    console.error('Error saving bookings:', error);
+    return false;
+  }
 }
+
+// HEADER
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+
   const location = useLocation();
+
   const close = () => setMenuOpen(false);
 
   return (
     <header className="header">
+
       <div className="nav wrap">
+
         <Link to="/" className="brand" onClick={close}>
-          <span className="brand-icon"><Utensils size={20} /></span>
-          <span>table<span className="brand-blue">ease</span><small>RESTAURANT RESERVATIONS</small></span>
+
+          <span className="brand-icon">
+            <Utensils size={20} />
+          </span>
+
+          <span>
+            table<span className="brand-blue">ease</span>
+            <small>RESTAURANT RESERVATIONS</small>
+          </span>
+
         </Link>
-        <button type="button" className="nav-toggle" aria-label="Toggle navigation" onClick={() => setMenuOpen(v => !v)}>
+
+        <button
+          type="button"
+          className="nav-toggle"
+          aria-label="Toggle navigation"
+          onClick={() => setMenuOpen(v => !v)}
+        >
           {menuOpen ? <X /> : <Menu />}
         </button>
+
         <nav className={menuOpen ? 'nav-links open' : 'nav-links'}>
-          <Link onClick={close} className={location.pathname === '/' ? 'active' : ''} to="/">Home</Link>
-          <Link onClick={close} to="/#find">Find Restaurants</Link>
-          <Link onClick={close} to="/#locations">Locations</Link>
-          <Link onClick={close} className={location.pathname === '/my-bookings' ? 'active' : ''} to="/my-bookings">Reservations</Link>
-          <Link onClick={close} className="nav-cta" to="/my-bookings">My Bookings <ArrowRight size={15} /></Link>
+
+          <Link
+            onClick={close}
+            className={location.pathname === '/' ? 'active' : ''}
+            to="/"
+          >
+            Home
+          </Link>
+
+          <Link onClick={close} to="/#find">
+            Find Restaurants
+          </Link>
+
+          <Link onClick={close} to="/#locations">
+            Locations
+          </Link>
+
+          <Link
+            onClick={close}
+            className={location.pathname === '/my-bookings' ? 'active' : ''}
+            to="/my-bookings"
+          >
+            Reservations
+          </Link>
+
+          <Link
+            onClick={close}
+            className="nav-cta"
+            to="/my-bookings"
+          >
+            My Bookings <ArrowRight size={15} />
+          </Link>
+
         </nav>
+
       </div>
+
     </header>
   );
 }
 
+// FOOTER
+
 function Footer() {
   return (
     <footer className="footer">
+
       <div className="wrap footer-grid">
+
         <div>
+
           <Link to="/" className="brand footer-brand">
-            <span className="brand-icon"><Utensils size={19} /></span>
-            <span>table<span className="brand-blue">ease</span><small>GOOD FOOD. GREAT MOMENTS.</small></span>
+
+            <span className="brand-icon">
+              <Utensils size={19} />
+            </span>
+
+            <span>
+              table<span className="brand-blue">ease</span>
+              <small>GOOD FOOD. GREAT MOMENTS.</small>
+            </span>
+
           </Link>
+
           <p>Find your table. Make it memorable.</p>
+
           <div className="socials">
-            <a href="#instagram" aria-label="Instagram"><Instagram size={16} /></a>
-            <a href="#facebook" aria-label="Facebook"><Facebook size={16} /></a>
-            <a href="#twitter" aria-label="Twitter"><Twitter size={16} /></a>
+
+            <a href="#instagram" aria-label="Instagram">
+              <Instagram size={16} />
+            </a>
+
+            <a href="#facebook" aria-label="Facebook">
+              <Facebook size={16} />
+            </a>
+
+            <a href="#twitter" aria-label="Twitter">
+              <Twitter size={16} />
+            </a>
+
           </div>
+
         </div>
-        <div><h4>Explore</h4><Link to="/search?state=Texas&city=Austin">Find restaurants</Link><Link to="/#locations">Popular locations</Link><Link to="/my-bookings">My bookings</Link></div>
-        <div><h4>Information</h4><a href="#about">About us</a><a href="#help">Help &amp; support</a><a href="#privacy">Privacy policy</a></div>
-        <div className="app-promo"><div className="phone-icon"><Smartphone size={27} /></div><div><h4>Good food is one tap away</h4><p>Discover your next favourite restaurant.</p><Link to="/search?state=Texas&city=Austin">Explore with TableEase <ArrowRight size={14} /></Link></div></div>
+
+        <div>
+          <h4>Explore</h4>
+          <Link to="/search?state=Texas&city=Austin">
+            Find restaurants
+          </Link>
+          <Link to="/#locations">Popular locations</Link>
+          <Link to="/my-bookings">My bookings</Link>
+        </div>
+
+        <div>
+          <h4>Information</h4>
+          <a href="#about">About us</a>
+          <a href="#help">Help &amp; support</a>
+          <a href="#privacy">Privacy policy</a>
+        </div>
+
+        <div className="app-promo">
+
+          <div className="phone-icon">
+            <Smartphone size={27} />
+          </div>
+
+          <div>
+            <h4>Good food is one tap away</h4>
+            <p>Discover your next favourite restaurant.</p>
+
+            <Link to="/search?state=Texas&city=Austin">
+              Explore with TableEase <ArrowRight size={14} />
+            </Link>
+          </div>
+
+        </div>
+
       </div>
-      <div className="wrap copyright">© 2026 TableEase. Made for memorable meals.<span>Terms&nbsp;&nbsp; · &nbsp;&nbsp;Privacy</span></div>
+
+      <div className="wrap copyright">
+        © 2026 TableEase. Made for memorable meals.
+        <span>Terms&nbsp;&nbsp; · &nbsp;&nbsp;Privacy</span>
+      </div>
+
     </footer>
   );
 }
 
+// MAIN APP
+
 export function App() {
-  return <>
-    <Header />
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/search" element={<SearchResults />} />
-      <Route path="/booking/:id" element={<BookingPage />} />
-      <Route path="/my-bookings" element={<MyBookings />} />
-      <Route path="*" element={<Home />} />
-    </Routes>
-    <Footer />
-  </>;
+  return (
+    <>
+      <Header />
+
+      <Routes>
+
+        <Route path="/" element={<Home />} />
+
+        <Route path="/search" element={<SearchResults />} />
+
+        <Route path="/booking/:id" element={<BookingPage />} />
+
+        <Route path="/my-bookings" element={<MyBookings />} />
+
+        <Route path="*" element={<Home />} />
+
+      </Routes>
+
+      <Footer />
+    </>
+  );
 }
+
 export default App;
+
+// HOME PAGE
 
 function Home() {
   const [states, setStates] = useState(fallbackStates);
+
   const [cities, setCities] = useState(fallbackCities);
+
   const [state, setState] = useState('Texas');
+
   const [city, setCity] = useState('Austin');
+
   const [showStates, setShowStates] = useState(false);
+
   const [showCities, setShowCities] = useState(false);
+
   const navigate = useNavigate();
 
+  // FETCH STATES
+
   useEffect(() => {
     let alive = true;
-    fetch(`${API}/states`).then(r => {
-      if (!r.ok) throw new Error('States request failed');
-      return r.json();
-    }).then(data => {
-      if (!alive) return;
-      const list = Array.isArray(data) ? data : data.states || data.data || [];
-      const names = list.map(x => typeof x === 'string' ? x : x.name || x.state).filter(Boolean);
-      if (names.length) setStates([...new Set([...fallbackStates, ...names])]);
-    }).catch(() => {});
-    return () => { alive = false; };
+
+    fetch(`${API}/states`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('States request failed');
+        }
+
+        return response.json();
+      })
+      .then(data => {
+        if (!alive) return;
+
+        const list = Array.isArray(data)
+          ? data
+          : data.states || data.data || [];
+
+        const names = list
+          .map(item =>
+            typeof item === 'string'
+              ? item
+              : item.name || item.state
+          )
+          .filter(Boolean);
+
+        if (names.length) {
+          setStates([...new Set([...fallbackStates, ...names])]);
+        }
+      })
+      .catch(error => {
+        console.error('States API:', error);
+      });
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
+  // FETCH CITIES
+
   useEffect(() => {
-    if (!state) return undefined;
+    if (!state) return;
+
     let alive = true;
-    fetch(`${API}/cities/${encodeURIComponent(state)}`).then(r => {
-      if (!r.ok) throw new Error('Cities request failed');
-      return r.json();
-    }).then(data => {
-      if (!alive) return;
-      const list = Array.isArray(data) ? data : data.cities || data.data || [];
-      const names = list.map(x => typeof x === 'string' ? x : x.name || x.city).filter(Boolean);
-      const next = names.length ? names : fallbackCities[state] || [];
-      setCities(prev => ({ ...prev, [state]: next }));
-      setCity(prev => next.includes(prev) ? prev : next[0] || '');
-    }).catch(() => {
-      if (!alive) return;
-      const next = fallbackCities[state] || [];
-      setCities(prev => ({ ...prev, [state]: next }));
-      setCity(prev => next.includes(prev) ? prev : next[0] || '');
-    });
-    return () => { alive = false; };
+
+    fetch(`${API}/cities/${encodeURIComponent(state)}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Cities request failed');
+        }
+
+        return response.json();
+      })
+      .then(data => {
+        if (!alive) return;
+
+        const list = Array.isArray(data)
+          ? data
+          : data.cities || data.data || [];
+
+        const names = list
+          .map(item =>
+            typeof item === 'string'
+              ? item
+              : item.name || item.city
+          )
+          .filter(Boolean);
+
+        const next = names.length
+          ? names
+          : fallbackCities[state] || [];
+
+        setCities(previous => ({
+          ...previous,
+          [state]: next
+        }));
+
+        setCity(previous =>
+          next.includes(previous) ? previous : next[0] || ''
+        );
+      })
+      .catch(() => {
+        if (!alive) return;
+
+        const next = fallbackCities[state] || [];
+
+        setCities(previous => ({
+          ...previous,
+          [state]: next
+        }));
+
+        setCity(previous =>
+          next.includes(previous) ? previous : next[0] || ''
+        );
+      });
+
+    return () => {
+      alive = false;
+    };
   }, [state]);
 
-  const search = e => {
-    e.preventDefault();
-    navigate(`/search?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}`);
+  const search = event => {
+    event.preventDefault();
+
+    navigate(
+      `/search?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}`
+    );
   };
 
-  return <main>
-    <section className="hero">
-      <div className="hero-shape shape-one" />
-      <div className="wrap hero-grid">
-        <div className="hero-copy">
-          <span className="eyebrow"><span className="eyebrow-dot" /> YOUR NEXT GREAT MEAL STARTS HERE</span>
-          <h1>Skip the wait.<br /><span>Reserve</span> your table.</h1>
-          <p>Discover the best restaurants around you and book your perfect table in just a few clicks.</p>
-          <div className="hero-points"><span><CheckCircle2 size={16} /> Free reservations</span><span><CheckCircle2 size={16} /> Instant confirmation</span></div>
-          <a className="text-link" href="#find">Find your next favourite <ArrowRight size={16} /></a>
-        </div>
-        <div className="hero-art">
-          <div className="hero-photo"><img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=90" alt="Restaurant interior" /></div>
-          <div className="floating-card rating-float"><span className="float-star"><Star size={17} fill="currentColor" /></span><div><strong>4.8/5</strong><small>Guest rated</small></div></div>
-          <div className="floating-card booking-float"><span className="float-check"><CheckCircle2 size={19} /></span><div><strong>Table secured!</strong><small>Your next meal awaits</small></div></div>
-          <div className="art-circle" />
-        </div>
-      </div>
-    </section>
+  return (
+    <main>
 
-    <section className="search-section" id="find">
-      <div className="wrap"><div className="search-card">
-        <div className="search-heading"><span className="search-icon"><Search size={21} /></span><div><h2>Find your perfect table</h2><p>Choose your destination and we'll find the restaurants.</p></div></div>
-        <form className="search-form" onSubmit={search}>
-          <div
-            className="select-field custom-select-field"
-            id="state"
-            onClick={event => {
-              if (event.target.closest('button, li')) return;
-              setShowStates(true);
-              setShowCities(false);
-            }}
-          >
-            <label htmlFor="state-select">State</label>
-            <div className="field-inner">
-              <MapPin size={17} />
-              <button
-                type="button"
-                id="state-select"
-                className="select-trigger"
-                aria-label="State"
-                aria-expanded={showStates}
+      {/* HERO SECTION */}
+
+      <section className="hero">
+
+        <div className="hero-shape shape-one" />
+
+        <div className="wrap hero-grid">
+
+          <div className="hero-copy">
+
+            <span className="eyebrow">
+              <span className="eyebrow-dot" />
+              YOUR NEXT GREAT MEAL STARTS HERE
+            </span>
+
+            <h1>
+              Skip the wait.
+              <br />
+              <span>Reserve</span> your table.
+            </h1>
+
+            <p>
+              Discover the best restaurants around you and book
+              your perfect table in just a few clicks.
+            </p>
+
+            <div className="hero-points">
+
+              <span>
+                <CheckCircle2 size={16} />
+                Free reservations
+              </span>
+
+              <span>
+                <CheckCircle2 size={16} />
+                Instant confirmation
+              </span>
+
+            </div>
+
+            <a className="text-link" href="#find">
+              Find your next favourite
+              <ArrowRight size={16} />
+            </a>
+
+          </div>
+
+          <div className="hero-art">
+
+            <div className="hero-photo">
+              <img
+                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=90"
+                alt="Restaurant interior"
+              />
+            </div>
+
+            <div className="floating-card rating-float">
+
+              <span className="float-star">
+                <Star size={17} fill="currentColor" />
+              </span>
+
+              <div>
+                <strong>4.8/5</strong>
+                <small>Guest rated</small>
+              </div>
+
+            </div>
+
+            <div className="floating-card booking-float">
+
+              <span className="float-check">
+                <CheckCircle2 size={19} />
+              </span>
+
+              <div>
+                <strong>Table secured!</strong>
+                <small>Your next meal awaits</small>
+              </div>
+
+            </div>
+
+            <div className="art-circle" />
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* SEARCH SECTION */}
+
+      <section className="search-section" id="find">
+
+        <div className="wrap">
+
+          <div className="search-card">
+
+            <div className="search-heading">
+
+              <span className="search-icon">
+                <Search size={21} />
+              </span>
+
+              <div>
+                <h2>Find your perfect table</h2>
+                <p>
+                  Choose your destination and we'll find the restaurants.
+                </p>
+              </div>
+
+            </div>
+
+            <form className="search-form" onSubmit={search}>
+
+              {/* STATE */}
+
+              <div
+                className="select-field custom-select-field"
+                id="state"
                 onClick={event => {
-                  event.stopPropagation();
+                  if (event.target.closest('button, li')) return;
+
                   setShowStates(true);
                   setShowCities(false);
                 }}
               >
-                {state || 'Select State'} <ChevronDown size={16} />
-              </button>
-            </div>
-            {showStates && (
-              <ul className="dropdown-options" role="listbox" aria-label="States">
-                {Array.from(new Set([...fallbackStates, ...states])).map(item => (
-                  <li
-                    key={item}
-                    role="option"
-                    aria-selected={state === item}
+
+                <label htmlFor="state-select">State</label>
+
+                <div className="field-inner">
+
+                  <MapPin size={17} />
+
+                  <button
+                    type="button"
+                    id="state-select"
+                    className="select-trigger"
+                    aria-label="State"
+                    aria-expanded={showStates}
                     onClick={event => {
                       event.stopPropagation();
-                      setState(item);
-                      const nextCities = cities[item] || fallbackCities[item] || [];
-                      setCity(nextCities[0] || '');
-                      setShowStates(false);
+
+                      setShowStates(value => !value);
+                      setShowCities(false);
                     }}
                   >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div
-            className="select-field custom-select-field"
-            id="city"
-            onClick={event => {
-              if (event.target.closest('button, li')) return;
-              setShowCities(true);
-              setShowStates(false);
-            }}
-          >
-            <label htmlFor="city-select">City</label>
-            <div className="field-inner">
-              <MapPin size={17} />
-              <button
-                type="button"
-                id="city-select"
-                className="select-trigger"
-                aria-label="City"
-                aria-expanded={showCities}
+                    {state || 'Select State'}
+                    <ChevronDown size={16} />
+                  </button>
+
+                </div>
+
+                {showStates && (
+                  <ul
+                    className="dropdown-options"
+                    role="listbox"
+                    aria-label="States"
+                  >
+
+                    {Array.from(
+                      new Set([...fallbackStates, ...states])
+                    ).map(item => (
+
+                      <li
+                        key={item}
+                        role="option"
+                        aria-selected={state === item}
+                        onClick={event => {
+                          event.stopPropagation();
+
+                          setState(item);
+
+                          const nextCities =
+                            cities[item] || fallbackCities[item] || [];
+
+                          setCity(nextCities[0] || '');
+
+                          setShowStates(false);
+                        }}
+                      >
+                        {item}
+                      </li>
+
+                    ))}
+
+                  </ul>
+                )}
+
+              </div>
+
+              {/* CITY */}
+
+              <div
+                className="select-field custom-select-field"
+                id="city"
                 onClick={event => {
-                  event.stopPropagation();
+                  if (event.target.closest('button, li')) return;
+
                   setShowCities(true);
                   setShowStates(false);
                 }}
               >
-                {city || 'Select City'} <ChevronDown size={16} />
-              </button>
-            </div>
-            {showCities && (
-              <ul className="dropdown-options" role="listbox" aria-label="Cities">
-                {[...new Set([...(cities[state] || []), ...(fallbackCities[state] || [])])].map(item => (
-                  <li
-                    key={item}
-                    role="option"
-                    aria-selected={city === item}
+
+                <label htmlFor="city-select">City</label>
+
+                <div className="field-inner">
+
+                  <MapPin size={17} />
+
+                  <button
+                    type="button"
+                    id="city-select"
+                    className="select-trigger"
+                    aria-label="City"
+                    aria-expanded={showCities}
                     onClick={event => {
                       event.stopPropagation();
-                      setCity(item);
-                      setShowCities(false);
+
+                      setShowCities(value => !value);
+                      setShowStates(false);
                     }}
                   >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <button id="searchBtn" type="submit" className="btn btn-primary search-submit"><Search size={17} /> Search Restaurants</button>
-        </form>
-        <div className="search-note"><span /> Explore trusted local favourites and reserve at no extra cost.</div>
-      </div></div>
-    </section>
+                    {city || 'Select City'}
+                    <ChevronDown size={16} />
+                  </button>
 
-    <section className="popular-section" id="locations"><div className="wrap">
-      <div className="section-heading"><div><span className="eyebrow">A TASTE OF SOMETHING GREAT</span><h2>Explore popular restaurants</h2><p>Handpicked places for your next special moment.</p></div><a href="#find" className="text-link">Find restaurants <ArrowRight size={16} /></a></div>
-      <Swiper modules={[Autoplay, Pagination]} spaceBetween={22} slidesPerView={1.08} breakpoints={{ 600: { slidesPerView: 2 }, 900: { slidesPerView: 3 } }} autoplay={{ delay: 4000, disableOnInteraction: false }} pagination={{ clickable: true }} className="restaurant-swiper">
-        {sampleRestaurants.slice(0, 3).map(r => <SwiperSlide key={r.id}>
-          <article className="featured-card"><div className="featured-image"><img src={r.image} alt={r.name} /><span className="cuisine-tag">{(r.cuisine || 'Restaurant').split(' · ')[0]}</span><span className="rating-pill"><Star size={13} fill="currentColor" /> {r.overallRating || r.rating || 4.5}</span></div>
-            <div className="featured-info"><div className="featured-title"><h3>{r.name}</h3><span>{r.price || '$$'}</span></div><p><MapPin size={14} /> {r.city}, {r.state}</p><div className="featured-bottom"><span><Heart size={14} /> Loved by locals</span><Link to={`/booking/${encodeURIComponent(r.id)}`} state={{ restaurant: r }}>Book FREE Reservation <ArrowRight size={14} /></Link></div></div>
-          </article>
-        </SwiperSlide>)}
-      </Swiper>
-    </div></section>
-  </main>;
+                </div>
+
+                {showCities && (
+                  <ul
+                    className="dropdown-options"
+                    role="listbox"
+                    aria-label="Cities"
+                  >
+
+                    {[
+                      ...new Set([
+                        ...(cities[state] || []),
+                        ...(fallbackCities[state] || [])
+                      ])
+                    ].map(item => (
+
+                      <li
+                        key={item}
+                        role="option"
+                        aria-selected={city === item}
+                        onClick={event => {
+                          event.stopPropagation();
+
+                          setCity(item);
+                          setShowCities(false);
+                        }}
+                      >
+                        {item}
+                      </li>
+
+                    ))}
+
+                  </ul>
+                )}
+
+              </div>
+
+              <button
+                id="searchBtn"
+                type="submit"
+                className="btn btn-primary search-submit"
+              >
+                <Search size={17} />
+                Search Restaurants
+              </button>
+
+            </form>
+
+            <div className="search-note">
+              <span />
+              Explore trusted local favourites and reserve at no extra cost.
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* POPULAR RESTAURANTS */}
+
+      <section className="popular-section" id="locations">
+
+        <div className="wrap">
+
+          <div className="section-heading">
+
+            <div>
+              <span className="eyebrow">
+                A TASTE OF SOMETHING GREAT
+              </span>
+
+              <h2>Explore popular restaurants</h2>
+
+              <p>
+                Handpicked places for your next special moment.
+              </p>
+            </div>
+
+            <a href="#find" className="text-link">
+              Find restaurants
+              <ArrowRight size={16} />
+            </a>
+
+          </div>
+
+          <Swiper
+            modules={[Autoplay, Pagination]}
+            spaceBetween={22}
+            slidesPerView={1.08}
+            breakpoints={{
+              600: { slidesPerView: 2 },
+              900: { slidesPerView: 3 }
+            }}
+            autoplay={{
+              delay: 4000,
+              disableOnInteraction: false
+            }}
+            pagination={{ clickable: true }}
+            className="restaurant-swiper"
+          >
+
+            {sampleRestaurants.slice(0, 3).map(restaurant => (
+
+              <SwiperSlide key={restaurant.id}>
+
+                <article className="featured-card">
+
+                  <div className="featured-image">
+
+                    <img
+                      src={restaurant.image}
+                      alt={restaurant.name}
+                    />
+
+                    <span className="cuisine-tag">
+                      {(restaurant.cuisine || 'Restaurant').split(' · ')[0]}
+                    </span>
+
+                    <span className="rating-pill">
+                      <Star size={13} fill="currentColor" />
+                      {restaurant.overallRating || restaurant.rating || 4.5}
+                    </span>
+
+                  </div>
+
+                  <div className="featured-info">
+
+                    <div className="featured-title">
+                      <h3>{restaurant.name}</h3>
+                      <span>{restaurant.price || '$$'}</span>
+                    </div>
+
+                    <p>
+                      <MapPin size={14} />
+                      {restaurant.city}, {restaurant.state}
+                    </p>
+
+                    <div className="featured-bottom">
+
+                      <span>
+                        <Heart size={14} />
+                        Loved by locals
+                      </span>
+
+                      <Link
+                        to={`/booking/${encodeURIComponent(restaurant.id)}`}
+                        state={{ restaurant }}
+                      >
+                        Book FREE Reservation
+                        <ArrowRight size={14} />
+                      </Link>
+
+                    </div>
+
+                  </div>
+
+                </article>
+
+              </SwiperSlide>
+
+            ))}
+
+          </Swiper>
+
+        </div>
+
+      </section>
+
+    </main>
+  );
 }
+
+// RESTAURANT NORMALIZATION
 
 function normalizeRestaurant(item, index, city, state) {
   return {
     ...item,
+
     id: String(item.id || item._id || `restaurant-${index}`),
+
     name: item.name || item.restaurantName || 'Restaurant',
+
     address: item.address || 'Address available on request',
+
     city: item.city || city,
+
     state: item.state || state,
+
     overallRating: Number(item.overallRating || item.rating || 4.5),
-    image: item.image || sampleRestaurants[index % Math.max(sampleRestaurants.length, 1)]?.image || '',
+
+    image:
+      item.image ||
+      sampleRestaurants[index % sampleRestaurants.length]?.image ||
+      '',
+
     cuisine: item.cuisine || 'Local favourite',
+
     price: item.price || '$$',
-    description: item.description || 'A welcoming local restaurant.'
+
+    description:
+      item.description || 'A welcoming local restaurant.'
   };
 }
 
+// SEARCH RESULTS PAGE
+
 function SearchResults() {
   const location = useLocation();
+
   const params = new URLSearchParams(location.search);
+
   const state = params.get('state') || 'Texas';
+
   const city = params.get('city') || 'Austin';
+
   const [restaurants, setRestaurants] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-    const matchingSamples = sampleRestaurants.filter(r =>
-      String(r.state || '').trim().toLowerCase() === state.trim().toLowerCase() &&
-      String(r.city || '').trim().toLowerCase() === city.trim().toLowerCase()
-    );
-    const fallbackSource = matchingSamples.length ? matchingSamples : sampleRestaurants;
-    const fallback = fallbackSource.map((r, i) =>
-      normalizeRestaurant({ ...r, city: r.city || city, state: r.state || state }, i, city, state)
-    );
-    setRestaurants(fallback);
-    setLoading(false);
+
+    const loadRestaurants = async () => {
+      setLoading(true);
+
+      try {
+        const matching = sampleRestaurants.filter(restaurant =>
+
+          String(restaurant.state || '').trim().toLowerCase() ===
+            state.trim().toLowerCase() &&
+
+          String(restaurant.city || '').trim().toLowerCase() ===
+            city.trim().toLowerCase()
+
+        );
+
+        if (alive) {
+          setRestaurants(
+            matching.map((restaurant, index) =>
+              normalizeRestaurant(restaurant, index, city, state)
+            )
+          );
+        }
+
+      } catch (error) {
+
+        console.error('Restaurant loading failed:', error);
+
+        if (alive) setRestaurants([]);
+
+      } finally {
+
+        if (alive) setLoading(false);
+
+      }
+    };
+
+    loadRestaurants();
+
+    return () => {
+      alive = false;
+    };
+
   }, [state, city]);
 
-  return <main className="page-main">
-    <section className="results-banner"><div className="wrap">
-      <div className="crumb"><Link to="/">Home</Link><span>/</span><span>Search results</span></div>
-      <h1>{loading ? 'Finding restaurants…' : `${restaurants.length} restaurants available in ${city}`}</h1>
-      <p>Explore local favourites in {city}, {state}.</p>
-      <Link className="back-link" to="/"><ArrowLeft size={15} /> Change location</Link>
-    </div></section>
-    <section className="results-content wrap">
-      {loading ? <p role="status">Loading restaurants...</p> : restaurants.length === 0 ? <div className="empty-state"><h2>No restaurants found in {city}, {state}.</h2><p>Try selecting another location.</p><Link className="btn btn-primary" to="/">Change location</Link></div> :
-        <div className="results-list">{restaurants.map((r, i) => <RestaurantCard key={r.id || i} restaurant={r} city={city} state={state} />)}</div>}
-    </section>
-  </main>;
+  return (
+    <main className="page-main">
+
+      <section className="results-banner">
+
+        <div className="wrap">
+
+          <div className="crumb">
+            <Link to="/">Home</Link>
+            <span>/</span>
+            <span>Search results</span>
+          </div>
+
+          <h1 data-testid="results-heading">
+            {loading
+              ? 'Finding restaurants...'
+              : `${restaurants.length} restaurants available in ${city}`}
+          </h1>
+
+          <p>Explore local favourites in {city}, {state}.</p>
+
+          <Link className="back-link" to="/">
+            <ArrowLeft size={15} />
+            Change location
+          </Link>
+
+        </div>
+
+      </section>
+
+      <section className="results-content wrap">
+
+        {loading ? (
+
+          <p role="status">Loading restaurants...</p>
+
+        ) : restaurants.length === 0 ? (
+
+          <div className="empty-state">
+
+            <h2>No restaurants found in {city}, {state}.</h2>
+
+            <p>Try selecting another location.</p>
+
+            <Link className="btn btn-primary" to="/">
+              Change location
+            </Link>
+
+          </div>
+
+        ) : (
+
+          <div className="results-list">
+
+            {restaurants.map((restaurant, index) => (
+
+              <RestaurantCard
+                key={restaurant.id || index}
+                restaurant={restaurant}
+                city={city}
+                state={state}
+              />
+
+            ))}
+
+          </div>
+
+        )}
+
+      </section>
+
+    </main>
+  );
 }
+
+// RESTAURANT CARD
 
 function RestaurantCard({ restaurant, city, state }) {
   const navigate = useNavigate();
-  const openBooking = () => navigate(`/booking/${encodeURIComponent(restaurant.id || restaurant._id || restaurant.name)}`, { state: { restaurant } });
-  return <article className="result-card">
-    <div className="result-image"><img src={restaurant.image || sampleRestaurants[0]?.image} alt={restaurant.name} /><span className="result-price">{restaurant.price || '$$'}</span></div>
-    <div className="result-details"><span className="result-cuisine">{restaurant.cuisine || 'RESTAURANT'}</span><h3>{restaurant.name}</h3>
-      <p className="address"><MapPin size={15} /> {restaurant.address || 'Address available on request'}, {restaurant.city || city}, {restaurant.state || state}</p>
-      <p className="restaurant-description">{restaurant.description || 'A welcoming local restaurant.'}</p>
-      <div className="result-meta"><span className="rating"><Star size={15} fill="currentColor" /> {Number(restaurant.overallRating || restaurant.rating || 4.5).toFixed(1)}</span><span>Overall rating</span><span className="free-reservation"><CheckCircle2 size={13} /> Free reservation</span></div>
-    </div>
-    <div className="result-action"><div className="result-action-heading"><Users size={14} /> Great for your next meal</div>
-      <button type="button" className="btn btn-primary mobile-toggle" data-testid="book-reservation" aria-label={`Book FREE Reservation at ${restaurant.name}`} onClick={openBooking}>
-        <span>Book FREE Reservation</span> <ArrowRight size={15} />
-      </button>
-      <small>No booking fees. Ever.</small>
-    </div>
-  </article>;
+
+  const openBooking = () => {
+    navigate(
+      `/booking/${encodeURIComponent(restaurant.id)}`,
+      {
+        state: { restaurant }
+      }
+    );
+  };
+
+  return (
+    <article className="result-card" data-testid="restaurant-card">
+
+      <div className="result-image">
+
+        <img
+          src={restaurant.image || sampleRestaurants[0]?.image}
+          alt={restaurant.name}
+        />
+
+        <span className="result-price">
+          {restaurant.price || '$$'}
+        </span>
+
+      </div>
+
+      <div className="result-details">
+
+        <span className="result-cuisine">
+          {restaurant.cuisine || 'RESTAURANT'}
+        </span>
+
+        <h3>{restaurant.name}</h3>
+
+        <p className="address">
+          <MapPin size={15} />
+          {restaurant.address || 'Address available on request'},
+          {' '}
+          {restaurant.city || city},
+          {' '}
+          {restaurant.state || state}
+        </p>
+
+        <p className="restaurant-description">
+          {restaurant.description || 'A welcoming local restaurant.'}
+        </p>
+
+        <div className="result-meta">
+
+          <span className="rating">
+            <Star size={15} fill="currentColor" />
+            {Number(restaurant.overallRating || restaurant.rating || 4.5).toFixed(1)}
+          </span>
+
+          <span>Overall rating</span>
+
+          <span className="free-reservation">
+            <CheckCircle2 size={13} />
+            Free reservation
+          </span>
+
+        </div>
+
+      </div>
+
+      <div className="result-action">
+
+        <div className="result-action-heading">
+          <Users size={14} />
+          Great for your next meal
+        </div>
+
+        <button
+          type="button"
+          className="btn btn-primary mobile-toggle"
+          data-testid="book-reservation"
+          aria-label={`Book FREE Reservation at ${restaurant.name}`}
+          onClick={openBooking}
+        >
+          <span>Book FREE Reservation</span>
+          <ArrowRight size={15} />
+        </button>
+
+        <small>No booking fees. Ever.</small>
+
+      </div>
+
+    </article>
+  );
 }
+
+// BOOKING PAGE
 
 function BookingPage() {
   const { id } = useParams();
+
   const location = useLocation();
+
   const [date, setDate] = useState('');
+
   const [time, setTime] = useState('');
+
   const [guests, setGuests] = useState('2 guests');
+
   const [success, setSuccess] = useState(false);
-  const restaurant = location.state?.restaurant ||
-    sampleRestaurants.find(r => String(r.id) === String(id)) || {
-      id, name: 'Austin Bistro & Grill', address: '120 Congress Avenue',
-      city: 'Austin', state: 'Texas', overallRating: 4.6,
-      image: sampleRestaurants[0]?.image, cuisine: 'American'
+
+  const restaurant =
+    location.state?.restaurant ||
+
+    sampleRestaurants.find(
+      restaurant => String(restaurant.id) === String(id)
+    ) ||
+
+    {
+      id,
+      name: 'Austin Bistro & Grill',
+      address: '120 Congress Avenue',
+      city: 'Austin',
+      state: 'Texas',
+      overallRating: 4.6,
+      image: sampleRestaurants[0]?.image,
+      cuisine: 'American'
     };
 
-  const dates = useMemo(() => Array.from({ length: 7 }, (_, i) => {
-    const day = new Date();
-    day.setHours(0, 0, 0, 0);
-    day.setDate(day.getDate() + i);
-    return day;
-  }), []);
+  const dates = useMemo(() => {
 
-  const reserve = event => {
-    event.preventDefault();
-    if (!date || !time) return;
-    const booking = {
-      id: `booking-${Date.now()}`,
-      restaurantId: String(restaurant.id || id),
-      restaurantName: restaurant.name || restaurant.restaurantName || 'Restaurant',
-      name: restaurant.name || restaurant.restaurantName || 'Restaurant',
-      address: restaurant.address || '',
-      city: restaurant.city || '',
-      state: restaurant.state || '',
-      date, time, bookingDate: date, bookingTime: time,
-      guests, numberOfGuests: guests, createdAt: new Date().toISOString()
-    };
-    saveBookings([booking, ...readBookings()]);
-    setSuccess(true);
-  };
+    return Array.from({ length: 7 }, (_, index) => {
 
-  return <main className="page-main booking-page"><div className="wrap booking-wrap">
-    {success ? <div className="success-panel"><CheckCircle2 size={45} /><h2>Your table is reserved!</h2><p>Your reservation at <strong>{restaurant.name}</strong> has been saved.</p><Link className="btn btn-primary" to="/my-bookings">View my bookings</Link></div> :
-      <form onSubmit={reserve}>
-        <Link className="back-link" to="/search?state=Texas&city=Austin"><ArrowLeft size={15} /> Back to restaurants</Link>
-        <h2>Reserve your table at {restaurant.name}</h2>
-        <p><MapPin size={15} /> {restaurant.address}{restaurant.city ? `, ${restaurant.city}` : ''}</p>
-        <h3><CalendarDays size={18} /> Choose a date</h3>
-        <div className="date-options">
-          {dates.map((day, index) => {
-            const value = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-            const label = index === 0 ? 'Today' : day.toLocaleDateString('en-US', { weekday: 'short' });
-            return <button type="button" key={value} data-testid="date-option" aria-label={`${label} ${day.getDate()}`} aria-pressed={date === value} onClick={() => setDate(value)} className={`date-option ${date === value ? 'selected' : ''}`}>
-              <span className="day-name">{label}</span>
-              <span className="day-num">{day.getDate()}</span>
-            </button>;
-          })}
-        </div>
-        <h3><Clock3 size={18} /> Choose a time slot</h3>
-        <div className="time-sections">
-          {Object.entries(TIMES).map(([category, slots]) => (
-            <div key={category} className="time-section">
-              <h4>{category}</h4>
-              <div className="time-slots">
-                {slots.map(slot => (
-                  <button type="button" key={slot} data-testid="time-slot" aria-pressed={time === slot} onClick={() => setTime(slot)} className={`time-slot ${time === slot ? 'selected' : ''}`}>{slot}</button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        <button type="submit" className="btn btn-primary reserve-btn" disabled={!date || !time}>Confirm Reservation</button>
-      </form>
-    }
-  </div></main>;
-}
+      const day = new Date();
 
-function MyBookings() {
-  const [bookings, setBookings] = useState(readBookings());
+      day.setHours(0, 0, 0, 0);
 
-  useEffect(() => {
-    const handleUpdate = () => setBookings(readBookings());
-    window.addEventListener('bookingsUpdated', handleUpdate);
-    return () => window.removeEventListener('bookingsUpdated', handleUpdate);
+      day.setDate(day.getDate() + index);
+
+      return day;
+
+    });
+
   }, []);
 
-  const cancelBooking = (id) => {
-    const updated = bookings.filter(b => b.id !== id);
+  const reserve = event => {
+
+    event.preventDefault();
+
+    if (!date || !time) return;
+
+    const booking = {
+
+      id: `booking-${Date.now()}`,
+
+      restaurantId: String(restaurant.id || id),
+
+      restaurantName: restaurant.name || restaurant.restaurantName || 'Restaurant',
+
+      name: restaurant.name || restaurant.restaurantName || 'Restaurant',
+
+      address: restaurant.address || '',
+
+      city: restaurant.city || '',
+
+      state: restaurant.state || '',
+
+      date,
+
+      time,
+
+      bookingDate: date,
+
+      bookingTime: time,
+
+      guests,
+
+      numberOfGuests: guests,
+
+      createdAt: new Date().toISOString()
+
+    };
+
+    const saved = saveBookings([
+      booking,
+      ...readBookings()
+    ]);
+
+    if (saved) {
+      setSuccess(true);
+    }
+
+  };
+
+  return (
+    <main className="page-main booking-page">
+
+      <div className="wrap booking-wrap">
+
+        {success ? (
+
+          <div className="success-panel" data-testid="booking-success">
+
+            <CheckCircle2 size={45} />
+
+            <h2>Your table is reserved!</h2>
+
+            <p>
+              Your reservation at
+              <strong> {restaurant.name} </strong>
+              has been saved.
+            </p>
+
+            <Link className="btn btn-primary" to="/my-bookings">
+              View my bookings
+            </Link>
+
+          </div>
+
+        ) : (
+
+          <form
+            onSubmit={reserve}
+            data-testid="booking-form"
+          >
+
+            <Link
+              className="back-link"
+              to="/search?state=Texas&city=Austin"
+            >
+              <ArrowLeft size={15} />
+              Back to restaurants
+            </Link>
+
+            <h2>Reserve your table at {restaurant.name}</h2>
+
+            <p>
+              <MapPin size={15} />
+              {restaurant.address}
+              {restaurant.city ? `, ${restaurant.city}` : ''}
+            </p>
+
+            {/* DATE OPTIONS */}
+
+            <h3>
+              <CalendarDays size={18} />
+              Choose a date
+            </h3>
+
+            <div className="date-options">
+
+              {dates.map((day, index) => {
+
+                const value =
+                  `${day.getFullYear()}-` +
+                  `${String(day.getMonth() + 1).padStart(2, '0')}-` +
+                  `${String(day.getDate()).padStart(2, '0')}`;
+
+                const label = index === 0
+                  ? 'Today'
+                  : day.toLocaleDateString('en-US', {
+                      weekday: 'short'
+                    });
+
+                return (
+
+                  <button
+                    type="button"
+                    key={value}
+                    data-testid="date-option"
+                    aria-label={`${label} ${day.getDate()}`}
+                    aria-pressed={date === value}
+                    onClick={() => setDate(value)}
+                    className={`date-option ${
+                      date === value ? 'selected' : ''
+                    }`}
+                  >
+
+                    <span className="day-name">
+                      {label}
+                    </span>
+
+                    <span className="day-num">
+                      {day.getDate()}
+                    </span>
+
+                  </button>
+
+                );
+
+              })}
+
+            </div>
+
+            {/* TIME SLOTS */}
+
+            <h3>
+              <Clock3 size={18} />
+              Choose a time slot
+            </h3>
+
+            <div className="time-sections">
+
+              {Object.entries(TIMES).map(([category, slots]) => (
+
+                <div key={category} className="time-section">
+
+                  <h4>{category}</h4>
+
+                  <div className="time-slots">
+
+                    {slots.map(slot => (
+
+                      <button
+                        type="button"
+                        key={slot}
+                        data-testid="time-slot"
+                        aria-pressed={time === slot}
+                        onClick={() => setTime(slot)}
+                        className={`time-slot ${
+                          time === slot ? 'selected' : ''
+                        }`}
+                      >
+                        {slot}
+                      </button>
+
+                    ))}
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
+            {/* GUESTS */}
+
+            <h3>
+              <Users size={18} />
+              Number of guests
+            </h3>
+
+            <select
+              aria-label="Number of guests"
+              data-testid="guest-select"
+              value={guests}
+              onChange={event => setGuests(event.target.value)}
+            >
+
+              {[
+                '1 guest',
+                '2 guests',
+                '3 guests',
+                '4 guests',
+                '5 guests',
+                '6 guests'
+              ].map(guest => (
+
+                <option key={guest} value={guest}>
+                  {guest}
+                </option>
+
+              ))}
+
+            </select>
+
+            {/* CONFIRM */}
+
+            <button
+              type="submit"
+              className="btn btn-primary reserve-btn"
+              data-testid="confirm-reservation"
+              disabled={!date || !time}
+            >
+              Confirm Reservation
+            </button>
+
+          </form>
+
+        )}
+
+      </div>
+
+    </main>
+  );
+}
+
+// MY BOOKINGS PAGE
+
+function MyBookings() {
+  const [bookings, setBookings] = useState(readBookings);
+
+  useEffect(() => {
+
+    const updateBookings = () => {
+      setBookings(readBookings());
+    };
+
+    window.addEventListener(
+      'bookingsUpdated',
+      updateBookings
+    );
+
+    window.addEventListener(
+      'storage',
+      updateBookings
+    );
+
+    return () => {
+
+      window.removeEventListener(
+        'bookingsUpdated',
+        updateBookings
+      );
+
+      window.removeEventListener(
+        'storage',
+        updateBookings
+      );
+
+    };
+
+  }, []);
+
+  const cancelBooking = id => {
+
+    const updated = readBookings().filter(
+      booking => booking.id !== id
+    );
+
     saveBookings(updated);
+
+    setBookings(updated);
+
   };
 
   return (
     <main className="page-main">
+
       <section className="results-banner">
+
         <div className="wrap">
-          <div className="crumb"><Link to="/">Home</Link><span>/</span><span>My Bookings</span></div>
-          <h1>My Bookings</h1>
+
+          <div className="crumb">
+            <Link to="/">Home</Link>
+            <span>/</span>
+            <span>My Bookings</span>
+          </div>
+
+          <h1 data-testid="my-bookings-heading">
+            My Bookings
+          </h1>
+
           <p>Manage your upcoming table reservations.</p>
+
         </div>
+
       </section>
+
       <section className="results-content wrap">
+
         {bookings.length === 0 ? (
+
           <div className="empty-state">
+
             <h2>No bookings found</h2>
+
             <p>You haven't reserved any tables yet.</p>
-            <Link className="btn btn-primary" to="/">Find restaurants</Link>
+
+            <Link className="btn btn-primary" to="/">
+              Find restaurants
+            </Link>
+
           </div>
+
         ) : (
+
           <div className="results-list">
-            {bookings.map(b => (
-              <article key={b.id} className="result-card">
+
+            {bookings.map(booking => (
+
+              <article
+                key={booking.id}
+                className="result-card"
+                data-testid="booking-card"
+              >
+
                 <div className="result-details">
-                  <span className="result-cuisine">RESERVATION</span>
-                  <h3>{b.restaurantName || b.name}</h3>
-                  <p className="address"><MapPin size={15} /> {b.address}, {b.city}, {b.state}</p>
-                  <p><CalendarDays size={14} /> {b.date || b.bookingDate} at {b.time || b.bookingTime} ({b.guests || b.numberOfGuests})</p>
+
+                  <span className="result-cuisine">
+                    RESERVATION
+                  </span>
+
+                  <h3>
+                    {booking.restaurantName || booking.name}
+                  </h3>
+
+                  <p className="address">
+                    <MapPin size={15} />
+                    {booking.address}
+                    {booking.city ? `, ${booking.city}` : ''}
+                    {booking.state ? `, ${booking.state}` : ''}
+                  </p>
+
+                  <p>
+                    <CalendarDays size={14} />
+                    {booking.date || booking.bookingDate}
+                    {' at '}
+                    {booking.time || booking.bookingTime}
+                  </p>
+
+                  <p>
+                    <Users size={14} />
+                    {booking.guests || booking.numberOfGuests}
+                  </p>
+
                 </div>
+
                 <div className="result-action">
-                  <button type="button" className="btn btn-secondary" onClick={() => cancelBooking(b.id)}>Cancel Booking</button>
+
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    data-testid="cancel-booking"
+                    onClick={() => cancelBooking(booking.id)}
+                  >
+                    Cancel Booking
+                  </button>
+
                 </div>
+
               </article>
+
             ))}
+
           </div>
+
         )}
+
       </section>
+
     </main>
   );
 }
