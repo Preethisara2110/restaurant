@@ -80,7 +80,7 @@ function Footer() {
         </div>
         <div><h4>Explore</h4><Link to="/search?state=Texas&city=Austin">Find restaurants</Link><Link to="/#locations">Popular locations</Link><Link to="/my-bookings">My bookings</Link></div>
         <div><h4>Information</h4><a href="#about">About us</a><a href="#help">Help &amp; support</a><a href="#privacy">Privacy policy</a></div>
-        <div className="app-promo"><div className="phone-icon"><Smartphone size={27} /></div><div><h4>Great food is one tap away</h4><p>Discover your next favourite restaurant.</p><Link to="/search?state=Texas&city=Austin">Explore with TableEase <ArrowRight size={14} /></Link></div></div>
+        <div className="app-promo"><div className="phone-icon"><Smartphone size={27} /></div><div><h4>Good food is one tap away</h4><p>Discover your next favourite restaurant.</p><Link to="/search?state=Texas&city=Austin">Explore with TableEase <ArrowRight size={14} /></Link></div></div>
       </div>
       <div className="wrap copyright">© 2026 TableEase. Made for memorable meals.<span>Terms&nbsp;&nbsp; · &nbsp;&nbsp;Privacy</span></div>
     </footer>
@@ -325,28 +325,6 @@ function SearchResults() {
     );
     setRestaurants(fallback);
     setLoading(false);
-    const controller = new AbortController();
-    const url = `${API}/restaurants?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}`;
-
-    fetch(url, { signal: controller.signal }).then(response => {
-      if (!response.ok) throw new Error('Restaurant request failed');
-      return response.json();
-    }).then(data => {
-      if (!alive) return;
-      const list = Array.isArray(data) ? data : data.restaurants || data.data || [];
-      if (Array.isArray(list) && list.length) {
-        const normalized = list.map((item, index) => normalizeRestaurant(item, index, city, state));
-        const matching = normalized.filter(item =>
-          String(item.state || '').toLowerCase() === state.toLowerCase() &&
-          String(item.city || '').toLowerCase() === city.toLowerCase()
-        );
-        if (matching.length) setRestaurants(matching);
-        else setRestaurants(fallback);
-      }
-    }).catch(error => {
-      if (error.name !== 'AbortError') console.warn('Using local restaurant data:', error.message);
-    });
-    return () => { alive = false; controller.abort(); };
   }, [state, city]);
 
   return <main className="page-main">
